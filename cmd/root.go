@@ -45,8 +45,9 @@ var (
 )
 
 var rootCommand = &cobra.Command{
-	Use:   "wings",
-	Short: "Runs the API server allowing programmatic control of game servers for Cinammon Panel.",
+	Use:     "wings",
+	Short:   "Runs the API server allowing programmatic control of game servers for Cinammon Panel.",
+	Version: system.Version,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		initConfig()
 		initLogging()
