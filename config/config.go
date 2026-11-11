@@ -16,6 +16,7 @@ import (
 	"sync/atomic"
 	"text/template"
 	"time"
+	"unsafe"
 
 	"github.com/gbrlsnchs/jwt/v3"
 
@@ -770,13 +771,28 @@ func UseOpenat2() bool {
 		openat2.Store(false)
 		return false
 	default:
-		fd, err := unix.Openat2(unix.AT_FDCWD, "/", &unix.OpenHow{})
+		path, err := unix.BytePtrFromString("/")
 		if err != nil {
 			log.WithError(err).Warn("error occurred while checking for openat2 support, falling back to openat")
 			openat2.Store(false)
 			return false
 		}
-		_ = unix.Close(fd)
+		how := struct {
+			Flags   uint64
+			Mode    uint64
+			Resolve uint64
+		}{}
+		fd, _, errno := unix.Syscall6(437, uintptr(unix.AT_FDCWD), uintptr(unsafe.Pointer(path)), uintptr(unsafe.Pointer(&how)), unsafe.Sizeof(how), 0, 0)
+		var err2 error
+		if errno != 0 {
+			err2 = errno
+		}
+		if err2 != nil {
+			log.WithError(err2).Warn("error occurred while checking for openat2 support, falling back to openat")
+			openat2.Store(false)
+			return false
+		}
+		_ = unix.Close(int(fd))
 		openat2.Store(true)
 		return true
 	}
