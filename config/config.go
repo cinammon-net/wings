@@ -782,7 +782,10 @@ func UseOpenat2() bool {
 			Mode    uint64
 			Resolve uint64
 		}{}
-		fd, _, errno := unix.Syscall6(437, uintptr(unix.AT_FDCWD), uintptr(unsafe.Pointer(path)), uintptr(unsafe.Pointer(&how)), unsafe.Sizeof(how), 0, 0)
+		// AT_FDCWD es -100: como constante no cabe en uintptr, por eso pasa por una variable.
+		dirfd := unix.AT_FDCWD
+		// 437 = openat2 en linux/amd64 y linux/arm64
+		fd, _, errno := unix.Syscall6(437, uintptr(dirfd), uintptr(unsafe.Pointer(path)), uintptr(unsafe.Pointer(&how)), unsafe.Sizeof(how), 0, 0)
 		var err2 error
 		if errno != 0 {
 			err2 = errno
